@@ -1,71 +1,129 @@
-from sympy import symbols, sympify
+from PySide6.QtWidgets import *
+from PySide6.QtCore import Qt
+from biseccion import *
+import sys
 
-x = symbols('x')
-
-def puntoMedio(a, b):
-    return (a + b) / 2
-
-def evalua(func, valor_x):
-    return float(func.subs(x, valor_x))
-
-def nuevoIntervalo(a, b, func):
-    m = puntoMedio(a, b)
-    if evalua(func, a) * evalua(func, m)<0:
-        return a, m
-    else:
-        return m, b
-    
-def funcion():
-    print("escribe la funcion a calcular f(x): ")
-    return sympify(input())
-    
-def calcError(a, b):
-    return abs(b - a) / 2
-
-def biseccion(a, b, func, err):
-    
-    error = 100
-    iteracion = 0
-
-    while error > err:
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Metodos Numericos")
+        self.resize(800, 500)
         
-        m = puntoMedio(a, b)
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(0,0,0,0)
+        main_layout.setSpacing(0)
+        
+        navbar = QWidget()
+        navbar.setFixedWidth(180)
+        navbar.setStyleSheet("background-color: #2b2b3d;")
+        nav_layout = QVBoxLayout(navbar)
+        nav_layout.setContentsMargins(10, 20, 10, 10)
+        nav_layout.setSpacing(10)
+        nav_layout.setAlignment(Qt.AlignTop)
+        
+        btn_style = """
+            QPushButton {
+                color: white;
+                background-color: transparent;
+                border: none;
+                padding: 10px;
+                text-align: left;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #44475a;
+                border-radius: 5px;
+            }
+        """
+        
+        self.btn_home = QPushButton("Inicio")
+        self.btn_Biseccion = QPushButton("Biseccion")
+        self.btn_Secante = QPushButton("Secante")
+        self.btn_FalsaPosicion = QPushButton("Falsa Posición")
+        self.btn_PuntoFijo = QPushButton("Punto fijo")
+        self.btn_NewtonRaphson = QPushButton("Newton-Raphson")
+        self.btn_ValorIntermedio = QPushButton("Valor intermedio")
+        self.btn_Steffensen  = QPushButton("Steffensent")
+        
+        
+        for btn in (self.btn_home, self.btn_Biseccion, self.btn_Secante, self.btn_FalsaPosicion, self.btn_PuntoFijo, self.btn_ValorIntermedio, self.btn_NewtonRaphson, self.btn_Steffensen):
+            btn.setStyleSheet(btn_style)
+            nav_layout.addWidget(btn)
 
-        fa = evalua(func, a)
-        fm = evalua(func, m)
+        # ---------- STACK DE PÁGINAS ----------
+        self.stack = QStackedWidget()
 
-        # Actualizamos el intervalo
-        if fa * fm < 0:
-            b = m
-        else:
-            a = m
+        self.page_home = self.crear_pagina("Página de Inicio")
+        self.page_Biseccion = self.crear_pagina("Biseccion")
+        self.page_Secante = self.crear_pagina("Secante")
+        self.page_FalsaPosicion = self.crear_pagina("Falsa Posición")
+        self.page_PuntoFijo = self.crear_pagina("Punto Fijo")
+        self.page_ValorIntermedio = self.crear_pagina("Valor Intermedio")
+        self.page_NewtonRaphson = self.crear_pagina("Newton-Raphson")
+        self.page_Steffensen = self.crear_pagina("Steffensen")
 
-        # Calculamos error
-        error = calcError(a, b)
+        self.stack.addWidget(self.page_home)      # index 0
+        self.stack.addWidget(self.page_Biseccion)   # index 1
+        self.stack.addWidget(self.page_Secante)  # index 2
+        self.stack.addWidget(self.page_FalsaPosicion)
+        self.stack.addWidget(self.page_PuntoFijo)
+        self.stack.addWidget(self.page_ValorIntermedio)
+        self.stack.addWidget(self.page_NewtonRaphson)
+        self.stack.addWidget(self.page_Steffensen)
 
-        iteracion += 1
+        # ---------- Conectar botones con páginas ----------
+        self.btn_home.clicked.connect(lambda: self.stack.setCurrentIndex(0))
+        self.btn_Biseccion.clicked.connect(lambda: self.stack.setCurrentIndex(1))
+        self.btn_Secante.clicked.connect(lambda: self.stack.setCurrentIndex(2))
+        self.btn_FalsaPosicion.clicked.connect(lambda: self.stack.setCurrentIndex(3))
+        self.btn_PuntoFijo.clicked.connect(lambda: self.stack.setCurrentIndex(4))
+        self.btn_ValorIntermedio.clicked.connect(lambda: self.stack.setCurrentIndex(5))
+        self.btn_NewtonRaphson.clicked.connect(lambda: self.stack.setCurrentIndex(6))
+        self.btn_Steffensen.clicked.connect(lambda: self.stack.setCurrentIndex(7))
 
-        print(
-            f"Iteración: {iteracion} | "
-            f"a: {a} | "
-            f"b: {b} | "
-            f"m: {m} | "
-            f"Error: {error}"
-        )
+        # Agregar navbar y stack al layout principal
+        main_layout.addWidget(navbar)
+        main_layout.addWidget(self.stack)
 
-    return m
-
+    def crear_pagina(self, texto):
+        pagina = QWidget()
+        layout = QVBoxLayout(pagina)
+        label = QLabel(texto)
+        label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet("font-size: 22px;")
+        layout.addWidget(label)
+        return pagina
 
 def main():
-    a = float(input("Ingrese el valor de a: "))
-    b = float(input("Ingrese el valor de b: "))
-    err = float(input("Ingrese el error deseado: "))
+    
+    app = QApplication(sys.argv)
+    ventana = MainWindow()    
+    ventana.show()
+    sys.exit(app.exec())
+    
+    
+    
+    # opc = 0
+    # while opc != 10:
+    #     match opc:
+    #         case 1:
+    #                 a = float(input("Ingrese el valor de a: "))
+    #                 b = float(input("Ingrese el valor de b: "))
+    #                 err = float(input("Ingrese el error deseado: "))
 
-    func = funcion()
+    #                 func = funcion()
 
-    raiz = biseccion(a, b, func, err)
+    #                 raiz = biseccion(a, b, func, err)
 
-    print(f"\nRaíz aproximada: {raiz}")
+    #                 print(f"\nRaíz aproximada: {raiz}")
+    #         case 2:
+    #             print("Aca va la Secante")
+    #         case _:
+    #             print("Error, ingrese un argumento valido")
+
+
     
     
 if __name__ == "__main__":
