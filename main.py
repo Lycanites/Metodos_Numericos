@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
-from biseccion import *
+from biseccion import Biseccion
 import sys
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -45,8 +46,7 @@ class MainWindow(QMainWindow):
         self.btn_PuntoFijo = QPushButton("Punto fijo")
         self.btn_NewtonRaphson = QPushButton("Newton-Raphson")
         self.btn_ValorIntermedio = QPushButton("Valor intermedio")
-        self.btn_Steffensen  = QPushButton("Steffensent")
-        
+        self.btn_Steffensen  = QPushButton("Steffensent")        
         
         for btn in (self.btn_home, self.btn_Biseccion, self.btn_Secante, self.btn_FalsaPosicion, self.btn_PuntoFijo, self.btn_ValorIntermedio, self.btn_NewtonRaphson, self.btn_Steffensen):
             btn.setStyleSheet(btn_style)
@@ -56,7 +56,7 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
 
         self.page_home = self.crear_pagina("Página de Inicio")
-        self.page_Biseccion = self.crear_pagina("Biseccion")
+        self.page_Biseccion = Biseccion()
         self.page_Secante = self.crear_pagina("Secante")
         self.page_FalsaPosicion = self.crear_pagina("Falsa Posición")
         self.page_PuntoFijo = self.crear_pagina("Punto Fijo")
@@ -102,29 +102,6 @@ def main():
     ventana = MainWindow()    
     ventana.show()
     sys.exit(app.exec())
-    
-    
-    
-    # opc = 0
-    # while opc != 10:
-    #     match opc:
-    #         case 1:
-    #                 a = float(input("Ingrese el valor de a: "))
-    #                 b = float(input("Ingrese el valor de b: "))
-    #                 err = float(input("Ingrese el error deseado: "))
-
-    #                 func = funcion()
-
-    #                 raiz = biseccion(a, b, func, err)
-
-    #                 print(f"\nRaíz aproximada: {raiz}")
-    #         case 2:
-    #             print("Aca va la Secante")
-    #         case _:
-    #             print("Error, ingrese un argumento valido")
-
-
-    
     
 if __name__ == "__main__":
     main()
