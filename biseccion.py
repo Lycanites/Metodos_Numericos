@@ -6,6 +6,9 @@ from sympy.parsing.sympy_parser import (
     convert_xor,
 )
 from PySide6.QtWidgets import *
+from PySide6.QtCore import Qt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
 
 x = symbols('x')
 
@@ -58,16 +61,18 @@ def funcion():
 def calcError(a, b):
     return abs(b - a) / 2
 
-def biseccion(a, b, func, err, log_callback=None):
+def biseccion(a, b, func, err, log_callback=None, max_iter = 1000):
     
     error = 100
     iteracion = 0
+    fx_texto = str(func)
 
-    while error > err:
+    while error > err and iteracion < max_iter:
         
         m = puntoMedio(a, b)
 
         fa = evalua(func, a)
+        fb = evalua(func, b)
         fm = evalua(func, m)
 
         # Actualizamos el intervalo
@@ -80,19 +85,14 @@ def biseccion(a, b, func, err, log_callback=None):
         error = calcError(a, b)
 
         iteracion += 1
-
-        linea = (
-            f"Iteración: {iteracion} | "
-            f"a: {a} | "
-            f"b: {b} | "
-            f"m: {m} | "
-            f"Error: {error}"
-        )
-
+        
         if log_callback:
-            log_callback(linea)
+            log_callback(iteracion, fx_texto, a, b, m, fa, fb, fm, error)
         else:
-            print(linea)
+            print(
+                f"Iteración: {iteracion} | a: {a} | b: {b} | "
+                f"m: {m} | fa: {fa} | fb: {fb} | fm: {fm} | Error: {error}"
+            )
 
     return m
 
@@ -118,13 +118,16 @@ class Biseccion(QWidget):
         self.errInput = QLineEdit()
         self.errInput.setPlaceholderText("err")
         
-        self.calcularBtn = QPushButton("Calcular")
+        self.calcularBtn = QPushButton("Calcular aproximaciones")
         self.calcularBtn.clicked.connect(self.calcular)
         
         self.resultadoLabel = QLabel("Resultado: ")
-        
-        self.logArea = QTextEdit()
-        self.logArea.setReadOnly(True)
+                
+        self.tabla = QTableWidget()
+        self.tabla.setColumnCount(7)
+        self.tabla.setHorizontalHeaderLabels(["Iteración", "f(x)", "a", "b", "m", "f(m)", "Error"])
+        self.tabla.horizontalHeader().setStretchLastSection(True)
+        self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
         
         form = QFormLayout()
         form.addRow("f(x): ", self.funcionInput)
@@ -132,11 +135,35 @@ class Biseccion(QWidget):
         form.addRow("b: ", self.bInput)
         form.addRow("Error", self.errInput)
         
+        # ======= PANEL IZQUIERDO ========
+        panelIzquierdo =QWidget()
+        layoutIzq = QVBoxLayout(panelIzquierdo)
+        layoutIzq.addLayout(form)
+        layoutIzq.addWidget(self.calcularBtn)
+        layoutIzq.addWidget(self.resultadoLabel)
+        layoutIzq.addWidget(self.tabla)
+        
+        # ======= PANEL DERECHO ========
+        
+        panelDerecho = QWidget()
+        layoutDer = QVBoxLayout(panelDerecho)
+        self.figure = Figure()
+        self.canvas = FigureCanvasQTAgg(self.figure)
+        self.ax = self.figure.add_subplot(111)
+        layoutDer.addWidget(self.canvas)
+        
+        # ======== SPLITTER =========
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.addWidget(panelIzquierdo)
+        splitter.addWidget(panelDerecho)
+        splitter.setStretchFactor(0,1)
+        splitter.setStretchFactor(1,2)
+        
         layout = QVBoxLayout()
-        layout.addLayout(form)
-        layout.addWidget(self.calcularBtn)
-        layout.addWidget(self.resultadoLabel)
-        layout.addWidget(self.logArea)
+        layout.addWidget(splitter)
+        # layout.addWidget(self.calcularBtn)
+        # layout.addWidget(self.resultadoLabel)
+        # layout.addWidget(self.logArea)
         
         self.setLayout(layout)
         
@@ -152,7 +179,28 @@ class Biseccion(QWidget):
         if evalua(func, a) * evalua(func, b)>=0:
             QMessageBox.warning(self, "Error", "f(a) y f(b) deben tener signos opuestos.")
             return
-        self.logArea.clear()
-        resultado = biseccion(a, b, func, err, log_callback  = self.logArea.append)
-        self.resultadoLabel.setText(f"Resultado: {resultado: .7f}")
+        
+        resultado = biseccion(a, b, func, err, log_callback=self.agregar_fila)
+        # self.resultadoLabel.setText(f"Resultado: {resultado: .7f}")
+        
+    def agregar_fila(self, iteracion, fx, a, b, m, fa, fb, fm, error):
+        fila = self.tabla.rowCount()
+        self.tabla.insertRow(fila)
+        valores = [
+            iteracion,
+            fx,
+            f"{a: .7f}",
+            f"{b: .7f}",
+            f"{m: .7f}",
+            f"{fa: .7f}",
+            f"{fb: .7f}",
+            f"{fm: .7f}",
+            f"{error: .7f}",
+        ]
+        
+        for col, valor in enumerate(valores):
+            item = QTableWidgetItem(str(valor))
+            item.setTextAlignment(Qt.AlignCenter)
+            self.tabla.setItem(fila, col, item)
+        self.tabla.scrollToBottom()
     
