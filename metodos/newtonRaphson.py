@@ -17,8 +17,6 @@ class FrmNewtonRaphson(QWidget):
         self.resize(800, 600)
 
         # Widget principal y Layout
-        main_widget = QWidget()
-        # self.setCentralWidget(main_widget)
         layout = QVBoxLayout()
 
         # Título
@@ -97,7 +95,7 @@ class FrmNewtonRaphson(QWidget):
         self.tbl_tabla.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.tbl_tabla)
 
-        main_widget.setLayout(layout)
+        self.setLayout(layout)
 
         # Centrar la ventana en la pantalla
         self.center_on_screen()
@@ -179,7 +177,7 @@ class FrmNewtonRaphson(QWidget):
                 ]
 
                 for col, val in enumerate(datos_fila):
-                    item = QTableWidgetCellItem = QTableWidgetItem(val)
+                    item = QTableWidgetItem(val)
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     self.tbl_tabla.setItem(row_position, col, item)
 

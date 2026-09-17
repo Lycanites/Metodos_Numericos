@@ -1,8 +1,11 @@
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
-from biseccion import Biseccion
-from newtonRaphson import FrmNewtonRaphson
+from metodos.biseccion import Biseccion
+from metodos.secante import Secante
+from metodos.falsaPosicion import FalsaPosicion
+from metodos.puntoFijo import PuntoFijo
+from metodos.newtonRaphson import FrmNewtonRaphson
 import sys
 
 
@@ -19,9 +22,9 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
 
         # ---------- NAVBAR ----------
-        self.navbar = QWidget()                     # <-- guardado como self.navbar
+        self.navbar = QWidget()
         self.navbar.setStyleSheet("background-color: #2b2b3d;")
-        self.navbar.setMinimumWidth(180)             # <-- min/max en vez de FixedWidth
+        self.navbar.setMinimumWidth(180)
         self.navbar.setMaximumWidth(180)
 
         nav_layout = QVBoxLayout(self.navbar)
@@ -45,11 +48,24 @@ class MainWindow(QMainWindow):
         """
         label_style = "color: #9aa0b3; font-size: 12px; font-weight: bold; margin-top: 6px;"
         
+        btn_style = """
+            QPushButton {
+                color: white;
+                background-color: transparent;
+                border: none;
+                padding: 10px;
+                text-align: left;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #44475a;
+                border-radius: 5px;
+            }
+        """
+        
         style = self.style()
         self.icono_colapsar = style.standardIcon(QStyle.SP_ArrowLeft)
         self.icono_expandir = style.standardIcon(QStyle.SP_ArrowRight)
-
-
 
         # Botón de menú (toggle)
         self.btn_menu = QPushButton()
@@ -65,9 +81,9 @@ class MainWindow(QMainWindow):
 
         self.page_home = self.crear_pagina("Metodos Numericos")
         self.page_Biseccion = Biseccion()
-        self.page_Secante = self.crear_pagina("Secante")
-        self.page_FalsaPosicion = self.crear_pagina("Falsa Posición")
-        self.page_PuntoFijo = self.crear_pagina("Punto Fijo")
+        self.page_Secante = Secante()
+        self.page_FalsaPosicion = FalsaPosicion()
+        self.page_PuntoFijo = PuntoFijo()
         self.page_NewtonRaphson = FrmNewtonRaphson()
         self.page_Steffensen = self.crear_pagina("Steffensen")
         self.page_Muller = self.crear_pagina("Müller")
@@ -75,7 +91,6 @@ class MainWindow(QMainWindow):
         self.page_Aitken = self.crear_pagina("Aitken")
         self.page_Deflacion = self.crear_pagina("Deflacion")
         self.page_Horner = self.crear_pagina("Horner")
-
 
         self.paginas = {
             "Inicio": self.page_home,
@@ -101,11 +116,13 @@ class MainWindow(QMainWindow):
         lbl_abiertos.setStyleSheet(label_style)
         self.metodosAbiertos = QComboBox()
         self.metodosAbiertos.addItems([
-            "Inicio",
+            "",
+            "Secante",
             "Punto fijo",
             "Newton-Raphson",
             "Steffensen",
             "Aitken",
+            "Muller",
             
         ])
         self.metodosAbiertos.setStyleSheet(combo_style)
@@ -115,7 +132,6 @@ class MainWindow(QMainWindow):
         self.metodosCerrados = QComboBox()
         self.metodosCerrados.addItems([
             "",
-            "Secante",
             "Biseccion",
             "Falsa Posición",
         ])
@@ -126,20 +142,33 @@ class MainWindow(QMainWindow):
         self.raicesDePolinomios = QComboBox()
         self.raicesDePolinomios.addItems([
             "",
-            "Muller",
             "Bairstow",
             "Deflacion",
             "Horner"
         ])
         self.raicesDePolinomios.setStyleSheet(combo_style)
 
-        self.metodosCerrados.currentTextChanged.connect(self.ir_a_pagina)
-        self.metodosAbiertos.currentTextChanged.connect(self.ir_a_pagina)
-        self.raicesDePolinomios.currentTextChanged.connect(self.ir_a_pagina)
+        self.metodosCerrados.currentTextChanged.connect(
+            lambda texto: self.ir_a_pagina(texto, origen="cerrados")
+        )
+        self.metodosAbiertos.currentTextChanged.connect(
+            lambda texto: self.ir_a_pagina(texto, origen="abiertos")
+        )
+        self.raicesDePolinomios.currentTextChanged.connect(
+            lambda texto: self.ir_a_pagina(texto, origen="raices")   
+        )
         
-        nav_layout.addWidget(lbl_abiertos)
-        nav_layout.addWidget(self.metodosCerrados)
+        # En esta area se configura el orden en el que se visualiza en la pantalla del usuario
+        self.btn_home = QPushButton("Inicio")
+        self.btn_home.setStyleSheet(btn_style)
+        self.btn_home.clicked.connect(lambda: self.ir_a_pagina("Inicio", origen=None)) # <- Conexión faltante
+
+        self.btn_home.setStyleSheet(btn_style)
+        
+        nav_layout.addWidget(self.btn_home)
         nav_layout.addWidget(lbl_cerrados)
+        nav_layout.addWidget(self.metodosCerrados)
+        nav_layout.addWidget(lbl_abiertos)
         nav_layout.addWidget(self.metodosAbiertos)
         nav_layout.addWidget(lbl_raicesDePolinomios)
         nav_layout.addWidget(self.raicesDePolinomios)
@@ -148,11 +177,28 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.navbar)
         main_layout.addWidget(self.stack)
 
-
-    def ir_a_pagina(self, nombre):
+    def ir_a_pagina(self, nombre, origen=None):
+        if not nombre:
+            return
+        
         indice = self.indice_por_nombre.get(nombre)
-        if indice is not None:
-            self.stack.setCurrentIndex(indice)
+        if indice is None:
+            return
+        
+        self._pagina_actual = nombre
+        self.stack.setCurrentIndex(indice)
+        
+        #Quita los combos que no originaron el cambio
+        combos = {
+            "cerrados": self.metodosCerrados,
+            "abiertos": self.metodosAbiertos,
+            "raices": self.raicesDePolinomios,
+        }
+        for clave, combo in combos.items():
+            if clave != origen: 
+                combo.blockSignals(True)
+                combo.setCurrentIndex(0)
+                combo.blockSignals(False)
 
     def crear_pagina(self, texto):
         pagina = QWidget()
@@ -167,7 +213,7 @@ class MainWindow(QMainWindow):
         current_width = self.navbar.width()
 
         min_width = 60
-        max_width = 220
+        max_width = 180
         
         colapsando = current_width == max_width
         target_width = min_width if colapsando else max_width
@@ -192,14 +238,12 @@ class MainWindow(QMainWindow):
         self.anim_min.start()
         self.anim_max.start()
 
-
 def main():
 
     app = QApplication(sys.argv)
     ventana = MainWindow()
     ventana.show()
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()

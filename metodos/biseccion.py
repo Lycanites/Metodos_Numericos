@@ -1,45 +1,13 @@
-from sympy import symbols, sympify
-from sympy.parsing.sympy_parser import (
-    parse_expr,
-    standard_transformations,
-    implicit_multiplication_application,
-    convert_xor,
-)
+from sympy import sympify, symbols
+from sympy import lambdify
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
+import numpy as np
+from metodos.parsear_funcion import parsear_funcion
 
 x = symbols('x')
-
-transformaciones = standard_transformations + (
-    implicit_multiplication_application,  # permite "2x" en vez de "2*x"
-    convert_xor,                          # permite "^" en vez de "**"
-)
-
-def parsear_funcion(texto):
-    """
-    Convierte un string ingresado por el usuario en una expresión sympy en x.
-    Lanza ValueError con mensaje claro si el input es inválido.
-    """
-    texto = texto.strip()
-    if not texto:
-        raise ValueError("La función no puede estar vacía.")
-
-    try:
-        expr = parse_expr(texto, local_dict={"x": x}, transformations=transformaciones)
-    except Exception as e:
-        raise ValueError(f"No se pudo interpretar la función: {e}")
-
-    # Verificar que la expresión solo dependa de x (o sea constante)
-    simbolos_extra = expr.free_symbols - {x}
-    if simbolos_extra:
-        raise ValueError(
-            f"La función solo debe depender de x. Símbolo(s) no reconocido(s): "
-            f"{', '.join(str(s) for s in simbolos_extra)}"
-        )
-
-    return expr
 
 def puntoMedio(a, b):
     return (a + b) / 2
@@ -96,9 +64,6 @@ def biseccion(a, b, func, err, log_callback=None, max_iter = 1000):
 
     return m
 
-    
-
-
 class Biseccion(QWidget):
     def __init__(self):
         super().__init__()
@@ -128,6 +93,7 @@ class Biseccion(QWidget):
         self.tabla.setHorizontalHeaderLabels(["Iteración", "f(x)", "a", "b", "m", "f(m)", "Error"])
         self.tabla.horizontalHeader().setStretchLastSection(True)
         self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
+                    
         
         form = QFormLayout()
         form.addRow("f(x): ", self.funcionInput)
@@ -166,7 +132,45 @@ class Biseccion(QWidget):
         # layout.addWidget(self.logArea)
         
         self.setLayout(layout)
+    
+    #===============Apartado para GRAFICAR=================
+    
+    def graficar_funcion(self, func, a, b, raiz=None):
+        """
+        Grafica la función smpy 'func' en un rango alrededor de [a, b].
+        Si se pasa una raiz, esta se marcara en el grafico.
+        """
         
+        self.ax.clear()
+        
+        f_numerica = lambdify(x, func, modules = ['numpy'])
+        
+        margen = (b-a)*0.3 if b != a else 1
+        x_vals = np.linspace(a - margen, b + margen, 500)
+        
+        try:
+            y_vals = f_numerica(x_vals)
+        except Exception as e:
+            QMessageBox.warning(self, "Error al graficar", f"No se pudo evaluar la función: {e}")
+            return
+        
+        self.ax.axhline(0, color="gray", linewidth = 0.8) # Este seria el eje x
+        self.ax.plot(x_vals, y_vals, label=f"f(x) = {func}")
+        
+        self.ax.axvline(a, color="orange", linestyle = "--", linewidth = 0.8, label = "a")
+        self.ax.axvline(a, color="green", linestyle = "--", linewidth = 0.8, label = "b")
+        
+        if raiz is not None:
+            self.ax.plot(raiz, 0, "ro", label = f"raiz ≈ {raiz:.5f}")
+            
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("f(x)")
+        self.ax.legend()
+        self.ax.grid(True, linestyle = ":", alpha = 0.6)
+        self.canvas.draw()
+    
+    #===============Funcion de CALCULAR=================
+    
     def calcular(self):
         try:
             func = parsear_funcion(self.funcionInput.text())
@@ -180,8 +184,14 @@ class Biseccion(QWidget):
             QMessageBox.warning(self, "Error", "f(a) y f(b) deben tener signos opuestos.")
             return
         
+        self.graficar_funcion(func, a, b)
+        
         resultado = biseccion(a, b, func, err, log_callback=self.agregar_fila)
-        # self.resultadoLabel.setText(f"Resultado: {resultado: .7f}")
+        
+        self.graficar_funcion(func, a, b, err, raiz=resultado)
+        self.resultadoLabel.setText(f"Resultado: {resultado:.7f}")
+        
+    #===============Funcion para TABULAR=================
         
     def agregar_fila(self, iteracion, fx, a, b, m, fa, fb, fm, error):
         fila = self.tabla.rowCount()
@@ -203,4 +213,3 @@ class Biseccion(QWidget):
             item.setTextAlignment(Qt.AlignCenter)
             self.tabla.setItem(fila, col, item)
         self.tabla.scrollToBottom()
-    
