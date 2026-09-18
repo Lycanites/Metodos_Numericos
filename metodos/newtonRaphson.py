@@ -159,8 +159,10 @@ class FrmNewtonRaphson(QWidget):
                     )
                     return
 
+                historial_x = [p0]
                 # Aplicar la fórmula: P_{i+1} = P_i - ( f(P_i) / f'(P_i) )
                 p_siguiente = pi - (f_pi / f_prime_pi)
+                historial_x.append(p_siguiente)
                 error_calculado = abs(p_siguiente - pi)
 
                 # Agregar fila a la tabla
@@ -184,6 +186,10 @@ class FrmNewtonRaphson(QWidget):
                 pi = p_siguiente
                 iteracion += 1
 
+            margen = max(abs(max(historial_x) - min(historial_x)) * 0.5, 1)
+            self.graficador.graficar_funcion(f, min(historial_x) - margen, max(historial_x) + margen,
+            puntos_x=historial_x, raiz=p_siguiente,
+            titulo="Newton-Raphson")
             # 5. Mensaje con el resultado final
             QMessageBox.information(
                 self,

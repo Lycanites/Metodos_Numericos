@@ -1,4 +1,4 @@
-from PySide6.QtCore import QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import QPropertyAnimation, QEasingCurve, QEvent
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
 from metodos.biseccion import Biseccion
@@ -26,6 +26,12 @@ class MainWindow(QMainWindow):
         self.navbar.setStyleSheet("background-color: #2b2b3d;")
         self.navbar.setMinimumWidth(180)
         self.navbar.setMaximumWidth(180)
+        self.navbar.setMouseTracking(True)
+        self.navbar.installEventFilter(self)
+
+        # Estado de la navbar
+        self._navbar_colapsada = False
+        self._expandido_por_hover = False
 
         nav_layout = QVBoxLayout(self.navbar)
         nav_layout.setContentsMargins(10, 20, 10, 10)
@@ -47,7 +53,7 @@ class MainWindow(QMainWindow):
             }
         """
         label_style = "color: #9aa0b3; font-size: 12px; font-weight: bold; margin-top: 6px;"
-        
+
         btn_style = """
             QPushButton {
                 color: white;
@@ -62,20 +68,15 @@ class MainWindow(QMainWindow):
                 border-radius: 5px;
             }
         """
-        
-        style = self.style()
-        self.icono_colapsar = style.standardIcon(QStyle.SP_ArrowLeft)
-        self.icono_expandir = style.standardIcon(QStyle.SP_ArrowRight)
 
-        # Botón de menú (toggle)
-        self.btn_menu = QPushButton()
-        self.btn_menu.setIcon(self.icono_colapsar)
+        # Botón de menú (toggle) - icono de tres rayas (hamburguesa)
+        self.btn_menu = QPushButton("☰")
         self.btn_menu.setStyleSheet(
-            "background-color: #34495e; color: white; border: none; padding: 8px;"
+            "background-color: #34495e; color: white; border: none; padding: 8px; font-size: 18px;"
         )
         self.btn_menu.clicked.connect(self.alternar_navbar)
         nav_layout.addWidget(self.btn_menu)
-        
+
         # ---------- STACK DE PÁGINAS ----------
         self.stack = QStackedWidget()
 
@@ -92,26 +93,28 @@ class MainWindow(QMainWindow):
         self.page_Deflacion = self.crear_pagina("Deflacion")
         self.page_Horner = self.crear_pagina("Horner")
 
+        # NOTA: las claves de este diccionario deben coincidir EXACTAMENTE
+        # (incluyendo acentos) con los textos que se agregan a los QComboBox.
         self.paginas = {
             "Inicio": self.page_home,
-            "Biseccion":self.page_Biseccion,
-            "Secante":self.page_Secante,
-            "Falsa Posicion":self.page_FalsaPosicion,
-            "Punto fijo":self.page_PuntoFijo,
-            "Newton-Raphson":self.page_NewtonRaphson,
-            "Steffensen":self.page_Steffensen,
-            "Muller":self.page_Muller,
-            "Bairstow":self.page_Bairstow,
-            "Aitken":self.page_Aitken,
-            "Deflacion":self.page_Deflacion,
-            "Horner":self.page_Horner
+            "Biseccion": self.page_Biseccion,
+            "Secante": self.page_Secante,
+            "Falsa Posición": self.page_FalsaPosicion,  # <- corregido (antes "Falsa Posicion")
+            "Punto fijo": self.page_PuntoFijo,
+            "Newton-Raphson": self.page_NewtonRaphson,
+            "Steffensen": self.page_Steffensen,
+            "Muller": self.page_Muller,
+            "Bairstow": self.page_Bairstow,
+            "Aitken": self.page_Aitken,
+            "Deflacion": self.page_Deflacion,
+            "Horner": self.page_Horner
         }
 
         self.indice_por_nombre = {}
         for nombre, pagina in self.paginas.items():
             indice = self.stack.addWidget(pagina)
             self.indice_por_nombre[nombre] = indice
-        
+
         lbl_abiertos = QLabel("Metodos Abiertos")
         lbl_abiertos.setStyleSheet(label_style)
         self.metodosAbiertos = QComboBox()
@@ -121,12 +124,10 @@ class MainWindow(QMainWindow):
             "Punto fijo",
             "Newton-Raphson",
             "Steffensen",
-            "Aitken",
             "Muller",
-            
         ])
         self.metodosAbiertos.setStyleSheet(combo_style)
-        
+
         lbl_cerrados = QLabel("Metodos Cerrados")
         lbl_cerrados.setStyleSheet(label_style)
         self.metodosCerrados = QComboBox()
@@ -136,13 +137,13 @@ class MainWindow(QMainWindow):
             "Falsa Posición",
         ])
         self.metodosCerrados.setStyleSheet(combo_style)
-        
+
         lbl_raicesDePolinomios = QLabel("Raices De Polinomios")
         lbl_raicesDePolinomios.setStyleSheet(label_style)
         self.raicesDePolinomios = QComboBox()
         self.raicesDePolinomios.addItems([
             "",
-            "Bairstow",
+            "Aitken",
             "Deflacion",
             "Horner"
         ])
@@ -155,16 +156,14 @@ class MainWindow(QMainWindow):
             lambda texto: self.ir_a_pagina(texto, origen="abiertos")
         )
         self.raicesDePolinomios.currentTextChanged.connect(
-            lambda texto: self.ir_a_pagina(texto, origen="raices")   
+            lambda texto: self.ir_a_pagina(texto, origen="raices")
         )
-        
+
         # En esta area se configura el orden en el que se visualiza en la pantalla del usuario
         self.btn_home = QPushButton("Inicio")
         self.btn_home.setStyleSheet(btn_style)
-        self.btn_home.clicked.connect(lambda: self.ir_a_pagina("Inicio", origen=None)) # <- Conexión faltante
+        self.btn_home.clicked.connect(lambda: self.ir_a_pagina("Inicio", origen=None))
 
-        self.btn_home.setStyleSheet(btn_style)
-        
         nav_layout.addWidget(self.btn_home)
         nav_layout.addWidget(lbl_cerrados)
         nav_layout.addWidget(self.metodosCerrados)
@@ -180,22 +179,22 @@ class MainWindow(QMainWindow):
     def ir_a_pagina(self, nombre, origen=None):
         if not nombre:
             return
-        
+
         indice = self.indice_por_nombre.get(nombre)
         if indice is None:
             return
-        
+
         self._pagina_actual = nombre
         self.stack.setCurrentIndex(indice)
-        
-        #Quita los combos que no originaron el cambio
+
+        # Limpia los combos que no originaron el cambio
         combos = {
             "cerrados": self.metodosCerrados,
             "abiertos": self.metodosAbiertos,
             "raices": self.raicesDePolinomios,
         }
         for clave, combo in combos.items():
-            if clave != origen: 
+            if clave != origen:
                 combo.blockSignals(True)
                 combo.setCurrentIndex(0)
                 combo.blockSignals(False)
@@ -209,20 +208,39 @@ class MainWindow(QMainWindow):
         layout.addWidget(label)
         return pagina
 
+    # ---------- Colapsar / expandir manual ----------
     def alternar_navbar(self):
+        current_width = self.navbar.maximumWidth()
+        colapsando = current_width != 60
+        target_width = 60 if colapsando else 180
+
+        self._navbar_colapsada = colapsando
+        self._expandido_por_hover = False
+        self._animar_navbar(target_width)
+
+    # ---------- Hover: expandir/colapsar temporalmente ----------
+    def eventFilter(self, obj, event):
+        if obj is self.navbar:
+            if event.type() == QEvent.Enter:
+                self.expandir_por_hover()
+            elif event.type() == QEvent.Leave:
+                self.colapsar_por_hover()
+        return super().eventFilter(obj, event)
+
+    def expandir_por_hover(self):
+        # Solo expande por hover si el usuario la dejó colapsada manualmente
+        if self._navbar_colapsada and self.navbar.maximumWidth() == 60:
+            self._expandido_por_hover = True
+            self._animar_navbar(180)
+
+    def colapsar_por_hover(self):
+        if self._expandido_por_hover:
+            self._expandido_por_hover = False
+            self._animar_navbar(60)
+
+    def _animar_navbar(self, target_width):
         current_width = self.navbar.width()
 
-        min_width = 60
-        max_width = 180
-        
-        colapsando = current_width == max_width
-        target_width = min_width if colapsando else max_width
-        
-        self.btn_menu.setIcon(
-            self.icono_expandir if colapsando else self.icono_colapsar
-        )
-
-        # ======= Animación =======
         self.anim_min = QPropertyAnimation(self.navbar, b"minimumWidth")
         self.anim_min.setDuration(300)
         self.anim_min.setStartValue(current_width)
@@ -238,12 +256,13 @@ class MainWindow(QMainWindow):
         self.anim_min.start()
         self.anim_max.start()
 
-def main():
 
+def main():
     app = QApplication(sys.argv)
     ventana = MainWindow()
     ventana.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

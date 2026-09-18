@@ -7,9 +7,10 @@ from sympy import symbols, lambdify
 
 from metodos.parsear_funcion import parsear_funcion
 
+#Hacer que la funcion introducida por el usuario dependa unicamente de "x"
 x = symbols('x')
 
-
+#Clase principal
 class FalsaPosicion(QWidget):
     def __init__(self):
         super().__init__()
