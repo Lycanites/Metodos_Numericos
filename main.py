@@ -6,6 +6,10 @@ from metodos.secante import Secante
 from metodos.falsaPosicion import FalsaPosicion
 from metodos.puntoFijo import PuntoFijo
 from metodos.newtonRaphson import FrmNewtonRaphson
+from metodos.lagrange import lagrange
+# from metodos.steffenssen import steffenssen
+from metodos.newtonRaphson import FrmNewtonRaphson
+from metodos.newtonRaphson import FrmNewtonRaphson
 import sys
 
 
@@ -86,12 +90,15 @@ class MainWindow(QMainWindow):
         self.page_FalsaPosicion = FalsaPosicion()
         self.page_PuntoFijo = PuntoFijo()
         self.page_NewtonRaphson = FrmNewtonRaphson()
-        self.page_Steffensen = self.crear_pagina("Steffensen")
+        # self.page_Steffensen = steffenssen()
         self.page_Muller = self.crear_pagina("Müller")
         self.page_Bairstow = self.crear_pagina("Bairstow")
         self.page_Aitken = self.crear_pagina("Aitken")
         self.page_Deflacion = self.crear_pagina("Deflacion")
         self.page_Horner = self.crear_pagina("Horner")
+        self.page_InterpolacionLagrange = self.crear_pagina("Lagrange")
+        self.page_interpolacionNevile = self.crear_pagina("Neville")
+        
 
         # NOTA: las claves de este diccionario deben coincidir EXACTAMENTE
         # (incluyendo acentos) con los textos que se agregan a los QComboBox.
@@ -102,7 +109,7 @@ class MainWindow(QMainWindow):
             "Falsa Posición": self.page_FalsaPosicion,  # <- corregido (antes "Falsa Posicion")
             "Punto fijo": self.page_PuntoFijo,
             "Newton-Raphson": self.page_NewtonRaphson,
-            "Steffensen": self.page_Steffensen,
+            # "Steffensen": self.page_Steffensen,
             "Muller": self.page_Muller,
             "Bairstow": self.page_Bairstow,
             "Aitken": self.page_Aitken,
@@ -148,6 +155,19 @@ class MainWindow(QMainWindow):
             "Horner"
         ])
         self.raicesDePolinomios.setStyleSheet(combo_style)
+        
+        lbl_interpolaciones = QLabel("Interpolaciones ")
+        lbl_interpolaciones.setStyleSheet(label_style)
+        self.interpolaciones = QComboBox()
+        self.interpolaciones.addItems([
+            "",
+            "Lagrange",
+            "Neville",
+        ])
+        
+        self.interpolaciones.setStyleSheet(combo_style)
+
+        
 
         self.metodosCerrados.currentTextChanged.connect(
             lambda texto: self.ir_a_pagina(texto, origen="cerrados")
@@ -171,6 +191,8 @@ class MainWindow(QMainWindow):
         nav_layout.addWidget(self.metodosAbiertos)
         nav_layout.addWidget(lbl_raicesDePolinomios)
         nav_layout.addWidget(self.raicesDePolinomios)
+        nav_layout.addWidget(lbl_interpolaciones)
+        nav_layout.addWidget(self.interpolaciones)
 
         # Agregar navbar y stack al layout principal
         main_layout.addWidget(self.navbar)

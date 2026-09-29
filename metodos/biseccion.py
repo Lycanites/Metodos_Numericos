@@ -68,46 +68,70 @@ class Biseccion(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.resize(500, 500)
+        def setup_ui(self):
+            layout_principal = QVBoxLayout(self)
+            layout_principal.setContentsMargins(20, 20, 20, 20)
+            layout_principal.setSpacing(12)
+            
+            titulo = QLabel("Metodo de biseccion")
+            titulo.setStyleSheet("font-size: 22pxx; font-weight: bold")
+            titulo.setAlignment(Qt.AlignCenter)
+            layout_principal.addWidget(titulo)
         
-        
-        self.funcionInput = QLineEdit()
-        self.funcionInput.setPlaceholderText("Ej: x**3 - x - 2")
-        
-        self.aInput = QLineEdit()
-        self.aInput.setPlaceholderText("a")
-        
-        self.bInput = QLineEdit()
-        self.bInput.setPlaceholderText("b")
-        
-        self.errInput = QLineEdit()
-        self.errInput.setPlaceholderText("err")
-        
-        self.calcularBtn = QPushButton("Calcular aproximaciones")
-        self.calcularBtn.clicked.connect(self.calcular)
-        
-        self.resultadoLabel = QLabel("Resultado: ")
+            # === ENTRADA DE DATOS ===
+            self.funcionInput = QLineEdit()
+            self.funcionInput.setPlaceholderText("Ej: x**3 - x - 2")
+            
+            self.aInput = QLineEdit()
+            self.aInput.setPlaceholderText("a")
                 
-        self.tabla = QTableWidget()
-        self.tabla.setColumnCount(7)
-        self.tabla.setHorizontalHeaderLabels(["Iteración", "f(x)", "a", "b", "m", "f(m)", "Error"])
-        self.tabla.horizontalHeader().setStretchLastSection(True)
-        self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            self.bInput = QLineEdit()
+            self.bInput.setPlaceholderText("b")
+                
+            self.errInput = QLineEdit()
+            self.errInput.setPlaceholderText("err")
+                
+            self.calcularBtn = QPushButton("Calcular aproximaciones")
+            self.calcularBtn.clicked.connect(self.calcular)    
+
+            self.resultadoLabel = QLabel("Resultado: ")
+            
+            #=== Botones de controñ del software===
+            btn_layout = QHBoxLayout()
+            
+            self.btn_calcular = QPushButton("Calcular")
+            self.btn_calcuñar.set.Stylesheet(
+                "background-color: #34495e; color: white; padding: 8px; border-radius: 5px;"
+            )
+            self.btn_calcular = QPushButton("Calcular")
+            self.btn_calcuñar.set.Stylesheet(
+                "background-color: #34495e; color: white; padding: 8px; border-radius: 5px;"
+            )
+            self.btn_calcular = QPushButton("Calcular")
+            self.btn_calcuñar.set.Stylesheet(
+                "background-color: #34495e; color: white; padding: 8px; border-radius: 5px;"
+            )
                     
-        
-        form = QFormLayout()
-        form.addRow("f(x): ", self.funcionInput)
-        form.addRow("a: ", self.aInput)
-        form.addRow("b: ", self.bInput)
-        form.addRow("Error", self.errInput)
+            self.tabla = QTableWidget()
+            self.tabla.setColumnCount(7)
+            self.tabla.setHorizontalHeaderLabels(["Iteración", "f(x)", "a", "b", "m", "f(m)", "Error"])
+            self.tabla.horizontalHeader().setStretchLastSection(True)
+            self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
+                        
+            
+            form = QFormLayout()
+            form.addRow("f(x): ", self.funcionInput)
+            form.addRow("a: ", self.aInput)
+            form.addRow("b: ", self.bInput)
+            form.addRow("Error", self.errInput)
         
         # ======= PANEL IZQUIERDO ========
         panelIzquierdo =QWidget()
         layoutIzq = QVBoxLayout(panelIzquierdo)
-        layoutIzq.addLayout(form)
-        layoutIzq.addWidget(self.calcularBtn)
-        layoutIzq.addWidget(self.resultadoLabel)
-        layoutIzq.addWidget(self.tabla)
+        # layoutIzq.addLayout(form)
+        # layoutIzq.addWidget(self.calcularBtn)
+        # layoutIzq.addWidget(self.resultadoLabel)
+        # layoutIzq.addWidget(self.tabla)
         
         # ======= PANEL DERECHO ========
         
@@ -127,9 +151,6 @@ class Biseccion(QWidget):
         
         layout = QVBoxLayout()
         layout.addWidget(splitter)
-        # layout.addWidget(self.calcularBtn)
-        # layout.addWidget(self.resultadoLabel)
-        # layout.addWidget(self.logArea)
         
         self.setLayout(layout)
     
