@@ -1,59 +1,35 @@
-from sympy import symbols, sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, exp, log, sqrt, pi, E, ln
+import sympy as sp
 from sympy.parsing.sympy_parser import (
-    parse_expr,
-    standard_transformations,
-    implicit_multiplication_application,
-    convert_xor,
+    parse_expr, standard_transformations,
+    implicit_multiplication_application, convert_xor
 )
 
-x = symbols('x')
+x = sp.symbols("x")
 
-transformaciones = standard_transformations + (
-    implicit_multiplication_application,  # permite "2x" en vez de "2*x"
-    convert_xor,                          # permite "^" en vez de "**"
+_TRANSFORMACIONES = standard_transformations + (
+    implicit_multiplication_application, convert_xor
 )
+_LOCALES = {"x": x, "e": sp.E, "pi": sp.pi, "ln": sp.log}
 
-#Diccionario de funciones, permite ciertas constantes y funciones permitidas
-
-contexto_matematico = {
-    "x": x,
-    "e": E,
-    "pi": pi,
-    "sin": sin,
-    "cos": cos,
-    "tan": tan,
-    "asin": asin,
-    "acos": acos,
-    "atan": atan,
-    "sinh": sinh,
-    "cosh": cosh,
-    "tanh": tanh,
-    "exp": exp,
-    "log": log,
-    "ln": ln,
-    "sqrt": sqrt,
-}
 
 def parsear_funcion(texto):
     """
-    Convierte un string ingresado por el usuario en una expresión sympy en x.
-    Lanza ValueError con mensaje claro si el input es inválido.
+    Convierte el texto del usuario en una expresión de sympy que depende de x.
+    Acepta ^ para potencias y multiplicación implícita: 2x, 3sin(x), x(x+1).
+    Lanza ValueError con un mensaje claro si no se puede interpretar.
     """
-    texto = texto.strip()
+    texto = (texto or "").strip()
     if not texto:
-        raise ValueError("La función no puede estar vacía.")
-
+        raise ValueError("Escribe una función.")
+    texto = texto.replace("√", "sqrt").replace("π", "pi").replace("−", "-")
     try:
-        expr = parse_expr(texto, local_dict=contexto_matematico, transformations=transformaciones)
+        expr = parse_expr(texto, local_dict=dict(_LOCALES),
+                          transformations=_TRANSFORMACIONES)
     except Exception as e:
-        raise ValueError(f"No se pudo interpretar la función: {e}")
+        raise ValueError(f"No se pudo interpretar «{texto}». Revisa la sintaxis.\n({e})")
 
-    # Verificar que la expresión solo dependa de x (o sea constante)
-    simbolos_extra = expr.free_symbols - {x}
-    if simbolos_extra:
-        raise ValueError(
-            f"La función solo debe depender de x. Símbolo(s) no reconocido(s): "
-            f"{', '.join(str(s) for s in simbolos_extra)}"
-        )
-
+    libres = expr.free_symbols - {x}
+    if libres:
+        nombres = ", ".join(sorted(str(s) for s in libres))
+        raise ValueError(f"La función solo puede depender de x (encontré: {nombres}).")
     return expr
