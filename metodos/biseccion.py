@@ -60,3 +60,4 @@ class Biseccion(MetodoBase):
         self.resultado_raiz(p, n, err, ok,
                             f"Iteraciones necesarias según la cota: n ≥ {n_teorico}")
         self.graficar(f, [a, b] + puntos, puntos_x=puntos, raiz=p)
+

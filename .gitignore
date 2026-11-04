@@ -63,3 +63,6 @@ coverage.xml
 *.swp
 *.swo
 .DS_Store
+
+.dockerignore
+DOCKERFILE
