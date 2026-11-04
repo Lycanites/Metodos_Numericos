@@ -1,0 +1,65 @@
+# Archivos compilados por Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribución y empaquetado
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Entornos virtuales
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Registros y bases de datos locales
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Pruebas y cobertura de código
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.ruff_cache/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Editores e IDEs (VS Code, PyCharm, etc.)
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
